@@ -1,0 +1,533 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EpEren | Radyo</title>
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
+    
+    * {
+        font-family: 'Roboto', sans-serif;
+    }
+    html{
+        height: 100%;
+        width: 100%;
+        background: transparent;
+    }
+    body{
+        height: 100%;
+        width: 100%;
+        background: transparent;
+        margin:0px;
+    }
+    #radyo_bilgi{
+        color:white;
+        display: -webkit-box;
+        display: -moz-box;
+        display: -ms-flexbox;
+        display: -webkit-flex;
+        display: flex;
+    
+        position: absolute;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        height: 100%;
+        width: 100%;
+        flex-direction: column;
+    }
+    #radyo_bilgi .copy{
+        margin-bottom: 10px;
+    }
+    .plyr {
+        display: none;
+    }
+    
+    </style>
+
+</head>
+<body>
+    
+    
+<audio style="display: none;" id="AudioPlayer" controls>
+    <source src="https://radio-trtfm.live.trt.com.tr/master.m3u8?" type="audio/m3u8" />
+</audio>
+
+<video style="display: none;" id="VideoPlayer" playsinline controls>
+    <source src="https://radio-trtfm.live.trt.com.tr/master.m3u8?" type="application/x-mpegURL" />
+</video>
+
+<div id="radyo_bilgi">
+    <div><--<b>E</b>  <b>R</b>---></div>
+
+    <div class="copy"><b>EpEren Radyo</b></div>
+    
+    <div class="name">PopTürk</div>
+    <div class="volume">10%</div>
+</div>
+
+<div style="height: 100%; width: 100%;" id="wheel"></div>
+
+
+
+<script type="text/javascript" src="raphael.min.js"></script>
+<script type="text/javascript" src="wheelnav.js"></script>
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+<script src="https://cdn.plyr.io/3.6.2/plyr.js"></script>
+<script src="https://cdn.jsdelivr.net/hls.js/latest/hls.js"></script>
+
+<script>
+    var UserData={
+        "Volume":20,
+        "LastRadio":null,
+        "IsShowing":false
+    };
+    
+    var Kanallar= [
+      {
+        "ID":0,
+        "Name":"Kapat",
+        "Image":"resimler/kapali.png",
+        "Type":"",
+        "Url":""
+      },
+      {
+        "ID": "97",
+        "Name": "Power Türk",
+        "Type": "audio/mpeg",
+        "Url": "https://listen.powerapp.com.tr/powerturk/mpeg/icecast.audio?/;stream.mp3",
+        "Image": "resimler/97.jpg"
+      },
+      {
+        "ID": "223",
+        "Name": "Kral Pop",
+        "Type": "audio/mpeg",
+        "Url": "http://kralpopwmp.radyotvonline.com/;?",
+        "Image": "resimler/223.jpg"
+      },
+      {
+        "ID": "108",
+        "Name": "Kral FM Dinle",
+        "Type": "audio/mpeg",
+        "Url": "http://kralwmp.radyotvonline.com/;?",
+        "Image": "resimler/108.jpg"
+      },
+      {
+        "ID": "25",
+        "Name": "Slow Türk",
+        "Type": "audio/mpeg",
+        "Url": "https://radyo.duhnet.tv/slowturk?",
+        "Image": "resimler/25.jpg"
+      },
+      {
+        "ID": "114",
+        "Name": "Joy Türk",
+        "Type": "audio/mpeg",
+        "Url": "https://playerservices.streamtheworld.com/api/livestream-redirect/JOY_TURK_SC?/;stream.mp3",
+        "Image": "resimler/114.jpg"
+      },
+      {
+        "ID": "43",
+        "Name": "Pal FM",
+        "Type": "audio/mpeg",
+        "Url": "http://shoutcast.radyogrup.com:1030/;?",
+        "Image": "resimler/43.jpg"
+      },
+      {
+        "ID": "189",
+        "Name": "Radyo D Dinle",
+        "Type": "audio/mpeg",
+        "Url": "https://radyo.duhnet.tv/radyod??",
+        "Image": "resimler/189.jpg"
+      },
+      {
+        "ID": "24",
+        "Name": "Alem FM",
+        "Type": "audio/mpeg",
+        "Url": "https://turkmedya.radyotvonline.net:80/stream/80/?",
+        "Image": "resimler/24.jpg"
+      },
+      {
+        "ID": "9",
+        "Name": "Best FM",
+        "Type": "audio/mpeg",
+        "Url": "http://46.20.7.125/;?",
+        "Image": "resimler/9.jpg"
+      },
+      {
+        "ID": "89",
+        "Name": "Radyo Viva",
+        "Type": "audio/mpeg",
+        "Url": "http://46.20.3.230:80/;?",
+        "Image": "resimler/89.jpg"
+      },
+      {
+        "ID": "13",
+        "Name": "Süper FM",
+        "Type": "audio/mpeg",
+        "Url": "https://playerservices.streamtheworld.com/api/livestream-redirect/SUPER_FM_SC?/;stream.mp3",
+        "Image": "resimler/13.jpg"
+      },
+      {
+        "ID": "31",
+        "Name": "Show Radyo",
+        "Type": "audio/mpeg",
+        "Url": "https://s4.canli-radyo.biz/;?",
+        "Image": "resimler/31.jpg"
+      },
+      {
+        "ID": "203",
+        "Name": "Efkar",
+        "Type": "audio/mpeg",
+        "Url": "https://playerservices.streamtheworld.com/api/livestream-redirect/SC008_SO1AAC_SC?",
+        "Image": "resimler/203.jpg"
+      },
+      {
+        "ID": "206",
+        "Name": "Damar FM",
+        "Type": "audio/mpeg",
+        "Url": "https://yayin.damarfm.com:8080/;?",
+        "Image": "resimler/206.jpg"
+      },
+      {
+        "ID": "99",
+        "Name": "Radyo 7 Türkü",
+        "Type": "audio/mpeg",
+        "Url": "http://37.247.98.8/stream/22/?",
+        "Image": "resimler/99.jpg"
+      },
+      {
+        "ID": "101",
+        "Name": "Radyo 7 Türk Sanat Müziği",
+        "Type": "audio/mpeg",
+        "Url": "http://37.247.98.8/stream/24/?",
+        "Image": "resimler/101.jpg"
+      },
+      {
+        "ID": "7214",
+        "Name": "Kafa Radyo 89.6",
+        "Type": "audio/mpeg",
+        "Url": "https://s27.canli-radyo.biz/stream/507/?",
+        "Image": "resimler/7214.jpg"
+      },
+      {
+        "ID": "176",
+        "Name": "Number One Türk",
+        "Type": "audio/mpeg",
+        "Url": "https://n10101m.mediatriple.net/videoonlylive/mtkgeuihrlfwlive/u_stream_5c9e30cf8d28e_1/playlist.m3u8?",
+        "Image": "resimler/176.jpg"
+      },
+      {
+        "ID": "3409",
+        "Name": "Açık Radyo 94.9",
+        "Type": "audio/mpeg",
+        "Url": "https://stream.34bit.net/ar.opus?",
+        "Image": "resimler/3409.jpg"
+      },
+      {
+        "ID": "17",
+        "Name": "Baba Radyo",
+        "Type": "audio/mpeg",
+        "Url": "http://37.247.98.7:80/;?",
+        "Image": "resimler/17.jpg"
+      },
+      {
+        "ID": "37",
+        "Name": "Radyo Alaturka",
+        "Type": "audio/mpeg",
+        "Url": "http://stream.radyoalaturka.com.tr:9100/;?",
+        "Image": "resimler/37.jpg"
+      },
+      {
+        "ID": "174",
+        "Name": "Slow Time",
+        "Type": "audio/mpeg",
+        "Url": "http://46.20.7.103:8030/;?",
+        "Image": "resimler/174.jpg"
+      },
+      {
+        "ID": "195",
+        "Name": "Can Radyo",
+        "Type": "audio/mpeg",
+        "Url": "http://canradyo.kesintisizyayin.com:3838/;?",
+        "Image": "resimler/195.jpg"
+      },
+      {
+        "ID": "129",
+        "Name": "Radyo Seymen",
+        "Type": "audio/mpeg",
+        "Url": "http://178.63.16.148:1070/stream??",
+        "Image": "resimler/129.jpg"
+      },
+      {
+        "ID": "503",
+        "Name": "Power FM",
+        "Type": "audio/mpeg",
+        "Url": "http://powerfm.listenpowerapp.com/powerfm/mpeg/icecast.audio?",
+        "Image": "resimler/503.jpg"
+      },
+      {
+        "ID": "164",
+        "Name": "Radyo Mydonose",
+        "Type": "audio/mpeg",
+        "Url": "https://playerservices.streamtheworld.com/api/livestream-redirect/SC010_SO1_SC?/;stream.mp3",
+        "Image": "resimler/164.jpg"
+      },
+      {
+        "ID": "155",
+        "Name": "Number One FM",
+        "Type": "audio/mpeg",
+        "Url": "https://n10101m.mediatriple.net/videoonlylive/mtkgeuihrlfwlive/u_stream_5c9e2f95dcb16_1/playlist.m3u8?",
+        "Image": "resimler/155.jpg"
+      },
+      {
+        "ID": "81",
+        "Name": "Pal Station",
+        "Type": "audio/mpeg",
+        "Url": "http://shoutcast.radyogrup.com:1020/;?",
+        "Image": "resimler/81.jpg"
+      },
+      {
+        "ID": "151",
+        "Name": "Metro FM",
+        "Type": "audio/mpeg",
+        "Url": "https://playerservices.streamtheworld.com/api/livestream-redirect/METRO_FM_SC?/;stream.mp3",
+        "Image": "resimler/151.jpg"
+      },
+      {
+        "ID": "75",
+        "Name": "Joy FM",
+        "Type": "audio/mpeg",
+        "Url": "https://playerservices.streamtheworld.com/api/livestream-redirect/JOY_FMAAC_SC?",
+        "Image": "resimler/75.jpg"
+      },
+      {
+        "ID": "86",
+        "Name": "Radyo Voyage",
+        "Type": "audio/mpeg",
+        "Url": "http://voyagewmp.radyotvonline.com/;?",
+        "Image": "resimler/86.jpg"
+      },
+      {
+        "ID": "134",
+        "Name": "Radyo Aşk FM",
+        "Type": "audio/mpeg",
+        "Url": "http://yayin.asymedya.com:8020/1;?",
+        "Image": "resimler/134.jpg"
+      },
+      {
+        "ID": "124",
+        "Name": "TRT FM",
+        "Type": "audio/mpeg",
+        "Url": "https://radio-trtfm.live.trt.com.tr/master.m3u8?",
+        "Image": "resimler/124.jpg"
+      }
+    ];
+    
+    var Resimler= [];
+    Kanallar.forEach(kanal => {
+        Resimler.push("imgsrc:"+kanal.Image);
+    });
+    
+    
+    
+    var wheel = new wheelnav('wheel');
+    wheel.centerX = $(window).width()/2;
+    wheel.centerY =  $(window).height()/2;;
+    wheel.slicePathFunction = slicePath().MenuSliceWithoutLine;
+    wheel.markerPathFunction = markerPath().MenuMarker;
+    wheel.wheelRadius = $(window).width()/3.5;
+    wheel.sliceSelectedPathCustom = wheel.slicePathCustom;
+    wheel.titleWidth = 40;
+    wheel.titleHeight = 40;
+    wheel.hoverEnable =false;
+    wheel.slicePathAttr = { 'fill' : '#adadad', 'stroke' : '#000000', 'stroke-width' : 3, 'opacity' : 0.60 };
+    wheel.sliceHoverAttr = { 'fill' : '#7a797852', 'stroke' : '#6397aa', 'stroke-width' : 3, 'opacity' : 0.80 };
+    wheel.sliceSelectedAttr = { 'fill' : 'black', 'stroke' : '#4c8aa1', 'stroke-width' : 3, 'opacity' : 0.80, 'width':"120px" };
+    wheel.animatetime = 400;
+    wheel.sliceSelectedTransformFunction = sliceTransform().ScaleTransform;
+    wheel.titleAttr =  { 'fill' : '#ffffff', 'stroke' :'none', 'font' : 'Helvetica', 'font-size' : 16, 'font-weight': 'bold' };
+    wheel.titleHoverAttr = { 'fill' : 'black', 'stroke' : 'none', 'font' : 'Helvetica', 'font-size' : 16, 'font-weight' : 'bold' }
+    wheel.titleSelectedAttr = { 'fill' : 'black', 'stroke' : 'none', 'font' : 'Helvetica', 'font-size' : 16, 'font-weight' : 'bold' }
+    wheel.clickModeRotate = false;
+    wheel.keynavigateEnabled = true;
+    wheel.keynavigateDownCode = 69; // E
+    wheel.keynavigateUpCode = 82; // R
+    wheel.initWheel(Resimler);
+    wheel.createWheel();
+    
+    
+    $(document).ready(function(){
+        $("html").hide();
+    
+        $(".volume").text(UserData.Volume+"%");
+    
+    
+        $(window).keypress(function(e){
+    
+            if(UserData.IsShowing==false){
+                e.preventDefault();
+                return;
+            }
+    
+            if(e.keyCode==43){
+                UserData.Volume++;
+                if(UserData.Volume > 100){
+                    UserData.Volume=100;
+                }
+            }else if(e.keyCode==45){
+                UserData.Volume--;
+                if(UserData.Volume < 0){
+                    UserData.Volume=0;
+                }
+            }
+    
+            $(".volume").text(UserData.Volume+"%");
+    
+            UpdateVolume(UserData.Volume);
+            
+        })
+        
+    
+        wheel.navItems.forEach(NItem => {
+            var CurrentSlice= $(NItem.navSlice.node);
+    
+            NItem.navigateFunction= function(){
+              
+                var resim= NItem.title.split(':')[1];
+                var Bul= Kanallar.find(x=>x.Image==resim);
+                if(Bul!=null){
+                    UpdateRadio(Bul);
+                    $(".name").text(Bul.Name);
+                    UserData.LastRadio=Bul;
+                }
+                
+            };
+            wheel.refreshWheel();
+        });
+    });
+    
+    window.addEventListener('message', (event) => {
+        let data = event.data
+        if(data.type == 'HUD') {
+            if(data.value=="SHOW"){
+                UserData.IsShowing=true;
+                $("html").show();
+            }else{
+                UserData.IsShowing=false;
+                $("html").hide();
+            }
+        }else if(data.type == 'RADIO') {
+            if(data.value=="LAST"){
+                if(UserData.LastRadio!=null){
+                    UpdateRadio(UserData.LastRadio);
+                }
+            }else if(data.value=="STOP"){
+                UpdateRadio({Name:"Kapat"})
+            }else if(data.value=="RESET"){
+                UpdateRadio({Name:"Kapat"})
+                for (var i = 0; i < wheel.navItems.length; i++) {
+                    wheel.navItems[i].selected = false;
+                }
+                wheel.navItems[0].selected=true;
+                wheel.refreshWheel();
+            }
+        }
+    })
+    
+    var IsPlaying=false;
+    
+    
+    </script>
+    
+<script>
+    const AudioPlayer = new Plyr('#AudioPlayer');
+    const VideoPlayer= new Plyr('#VideoPlayer');
+    UpdateVolume(UserData.Volume);
+    
+    function ChangeAudio(url){
+        AudioPlayer.source= {
+            type: 'audio',
+            title: 'Example title',
+            sources: [
+                {
+                src: url,
+                type: 'audio/mp3',
+                }
+            ],
+        };
+    }
+    
+    function ChangeVideo(url){
+        var hls = new Hls();
+        var PlayerElement = document.getElementById('VideoPlayer');
+        hls.loadSource(url);
+        hls.attachMedia(PlayerElement);
+        hls.on(Hls.Events.MANIFEST_PARSED,function() {
+            (PlayerElement.play()).catch(_=>{});
+        });
+    }
+    
+    AudioPlayer.on('canplay', e => {
+        
+        (AudioPlayer.play()).catch(_=>{});
+        
+    });
+    
+    VideoPlayer.on('canplay', e => {
+        (VideoPlayer.play()).catch(_=>{});
+    });
+    
+    function UpdateVolume(Vol){
+        AudioPlayer.volume= Vol/100;
+        VideoPlayer.volume= Vol/100;
+    }
+    
+    function UpdateRadio(obj){
+    
+    if(obj.Name=="Kapat"){
+        ChangeAudio("/");
+        ChangeVideo("/");
+    
+        $.post('http://eperen_radyo/StopPlaying', JSON.stringify({}));
+    
+        return;
+    }
+    
+    var Url= obj.Url;
+    
+    if(VideoPlayer.playing){
+        ChangeVideo("/");
+    }
+    
+    if(AudioPlayer.playing){
+        ChangeAudio("/");
+    }
+    
+    if(Url.includes('m3u8')){
+        ChangeVideo(Url);   
+    }else{
+        ChangeAudio(Url);
+    }
+    
+    $.post('http://eperen_radyo/StartPlaying', JSON.stringify({}));
+    
+    setTimeout(() => {
+        if(Url.includes('m3u8')){
+            if(AudioPlayer.playing){
+                ChangeAudio("/");
+            }
+        }else{
+            if(VideoPlayer.playing){
+                ChangeVideo("/");
+            }   
+        }
+    }, 1000);
+    }
+    
+    </script>
+
+</body>
+</html>
